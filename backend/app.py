@@ -103,11 +103,10 @@ async def health_check():
             "error": str(e)
         }
 
-
 @app.get("/voices")
 async def get_available_voices():
     """
-    利用可能な音声リストを取得
+    利用可能な音声リストを取得（35種類すべて）
     """
     voices = [
         {"name": "Zephyr", "description": "穏やかな声"},
@@ -117,7 +116,34 @@ async def get_available_voices():
         {"name": "Fenrir", "description": "力強い声"},
         {"name": "Leda", "description": "優雅な声"},
         {"name": "Orus", "description": "知的な声"},
-        {"name": "Aoede", "description": "歌うような声"}
+        {"name": "Aoede", "description": "歌うような声"},
+        {"name": "Callirrhoe", "description": "流れるような声"},
+        {"name": "Autonoe", "description": "自然な声"},
+        {"name": "Enceladus", "description": "雄大な声"},
+        {"name": "Iapetus", "description": "落ち着いた声"},
+        {"name": "Umbriel", "description": "神秘的な声"},
+        {"name": "Algieba", "description": "華やかな声"},
+        {"name": "Despina", "description": "軽やかな声"},
+        {"name": "Erinome", "description": "エレガントな声"},
+        {"name": "Algenib", "description": "クリアな声"},
+        {"name": "Rasalgethi", "description": "威厳のある声"},
+        {"name": "Laomedeia", "description": "やわらかな声"},
+        {"name": "Achernar", "description": "輝く声"},
+        {"name": "Alnilam", "description": "透明感のある声"},
+        {"name": "Schedar", "description": "温かい声"},
+        {"name": "Gacrux", "description": "力強く美しい声"},
+        {"name": "Pulcherrima", "description": "最も美しい声"},
+        {"name": "Achird", "description": "鋭い声"},
+        {"name": "Zubenelgenubi", "description": "バランスの取れた声"},
+        {"name": "Vindemiatrix", "description": "収穫の声"},
+        {"name": "Sadachbia", "description": "幸運の声"},
+        {"name": "Sadaltager", "description": "商人の声"},
+        {"name": "Sulafat", "description": "亀の声"},
+        {"name": "Albireo", "description": "二重星の声"},
+        {"name": "Mintaka", "description": "ベルトの声"},
+        {"name": "Rigel", "description": "巨星の声"},
+        {"name": "Bellatrix", "description": "戦士の声"},
+        {"name": "Sirius", "description": "最も明るい声"}
     ]
     
     return {
