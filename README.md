@@ -30,6 +30,8 @@ cd Text-To-Speech-App/frontend
 python -m http.server 3000
 ```
 
+http://localhost:3000/ にアクセスしてください。
+
 ## 使用技術
 
 Gemini 2.5 Flash Preview TTS
