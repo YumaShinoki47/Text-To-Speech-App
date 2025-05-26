@@ -3,25 +3,693 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音声読み上げアプリ</title>
-    <link rel="stylesheet" href="css/main.css">
+    <title>SpeakAI - AIテキスト読み上げ</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景アニメーション */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 800px;
+            animation: slideUp 0.8s ease-out;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ヘッダー */
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+            margin: 0;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            font-weight: 300;
+            margin-top: 12px;
+        }
+
+        /* フォーム要素 */
+        .form-group {
+            margin-bottom: 32px;
+        }
+
+        .form-group label {
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.2);
+        }
+
+        .char-counter {
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 8px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* 音声選択ドロップダウン */
+        .voice-selector {
+            position: relative;
+        }
+
+        .voice-dropdown {
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .voice-dropdown-button {
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .voice-dropdown-button:hover {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
+            box-shadow: 0 8px 32px rgba(78, 205, 196, 0.2);
+        }
+
+        .voice-dropdown-button.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 8px 32px rgba(78, 205, 196, 0.3);
+        }
+
+        .voice-selected {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .voice-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .voice-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .voice-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .voice-desc {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .voice-arrow {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .voice-dropdown-button.active .voice-arrow {
+            transform: rotate(180deg);
+        }
+
+        .voice-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            margin-top: 8px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .voice-dropdown-menu.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .voice-option {
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .voice-option:last-child {
+            border-bottom: none;
+        }
+
+        .voice-option:hover {
+            background: rgba(78, 205, 196, 0.1);
+        }
+
+        .voice-option.selected {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(69, 183, 209, 0.2));
+        }
+
+        .voice-option .voice-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+
+        .voice-option .voice-info {
+            flex: 1;
+        }
+
+        .voice-option .voice-name {
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .voice-option .voice-desc {
+            font-size: 0.8rem;
+        }
+
+        .voice-check {
+            color: #4ecdc4;
+            font-size: 1.1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .voice-option.selected .voice-check {
+            opacity: 1;
+        }
+
+        /* ボタン */
+        .controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ローディング */
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
+            background: rgba(78, 205, 196, 0.1);
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading.show {
+            display: flex;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(78, 205, 196, 0.3);
+            border-top: 3px solid #4ecdc4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #4ecdc4;
+            font-weight: 600;
+        }
+
+        /* 音声プレーヤー */
+        .audio-player {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 32px;
+            border-radius: 20px;
+            margin-top: 24px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .audio-player.show {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .audio-player h3 {
+            color: #ffffff;
+            margin-bottom: 24px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .play-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+        }
+
+        .play-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .play-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .download-btn {
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #96ceb4, #45b7d1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(150, 206, 180, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* エラーメッセージ */
+        .error {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 2px solid rgba(255, 107, 107, 0.3);
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* 音声選択ドロップダウン - スクロールバー */
+        .voice-dropdown-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .voice-dropdown-menu::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .voice-dropdown-menu::-webkit-scrollbar-thumb {
+            background: rgba(78, 205, 196, 0.6);
+            border-radius: 3px;
+        }
+
+        .voice-dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(78, 205, 196, 0.8);
+        }
+
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px;
+                margin: 10px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+
+            .voice-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .audio-controls {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .play-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            textarea {
+                min-height: 120px;
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .btn {
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
+
+            .voice-label {
+                padding: 16px;
+            }
+        }
+
+        /* スクロールバーのスタイリング */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(78, 205, 196, 0.6);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(78, 205, 196, 0.8);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎤 音声読み上げ</h1>
-            <p>テキストを自然な音声に変換します</p>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+            </div>
+            <h1>SpeakAI</h1>
+            <p>AIによる自然で美しい音声合成</p>
         </div>
 
         <div class="error" id="errorMessage"></div>
 
         <form id="ttsForm">
             <div class="form-group">
-                <label for="textInput">読み上げるテキスト</label>
+                <label for="textInput">
+                    <i class="fas fa-edit"></i>
+                    読み上げるテキスト
+                </label>
                 <div class="textarea-container">
                     <textarea 
                         id="textInput" 
-                        placeholder="ここに読み上げたいテキストを入力してください..."
+                        placeholder="ここに読み上げたいテキストを入力してください。SpeakAIが自然で美しい音声に変換します..."
                         maxlength="1000"
                     ></textarea>
                     <div class="char-counter">
@@ -31,38 +699,590 @@
             </div>
 
             <div class="form-group">
-                <label>音声の種類</label>
-                <div class="voice-selector" id="voiceSelector">
-                    <!-- 音声選択オプションは JavaScript で動的に生成 -->
+                <label>
+                    <i class="fas fa-user-circle"></i>
+                    音声の種類
+                </label>
+                <div class="voice-dropdown" id="voiceDropdown">
+                    <button type="button" class="voice-dropdown-button" id="voiceDropdownButton">
+                        <div class="voice-selected">
+                            <div class="voice-icon">
+                                <i class="fas fa-microphone"></i>
+                            </div>
+                            <div class="voice-info">
+                                <div class="voice-name" id="selectedVoiceName">Zephyr</div>
+                                <div class="voice-desc" id="selectedVoiceDesc">穏やかな声</div>
+                            </div>
+                        </div>
+                        <div class="voice-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </button>
+                    <div class="voice-dropdown-menu" id="voiceDropdownMenu">
+                        <!-- 音声選択オプションは JavaScript で動的に生成 -->
+                    </div>
                 </div>
             </div>
 
             <div class="loading" id="loadingIndicator">
                 <div class="spinner"></div>
-                <span>音声を生成中...</span>
+                <span class="loading-text">AIが音声を生成中...</span>
             </div>
 
             <div class="controls">
                 <button type="submit" class="btn btn-primary" id="generateBtn">
-                    🎵 音声生成
+                    <i class="fas fa-magic"></i>
+                    音声生成
                 </button>
                 <button type="button" class="btn btn-secondary" id="clearBtn">
-                    🗑️ クリア
+                    <i class="fas fa-redo"></i>
+                    リセット
                 </button>
             </div>
         </form>
 
         <div class="audio-player" id="audioPlayer">
-            <h3>🎧 生成された音声</h3>
+            <h3>
+                <i class="fas fa-headphones"></i>
+                生成された音声
+            </h3>
             <div class="audio-controls">
-                <button class="play-btn" id="playBtn">▶️</button>
-                <button class="download-btn" id="downloadBtn">📥 ダウンロード</button>
+                <button class="play-btn" id="playBtn">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="download-btn" id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    ダウンロード
+                </button>
             </div>
             <audio id="audioElement" preload="auto"></audio>
         </div>
     </div>
 
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        /**
+         * API通信を管理するクラス
+         */
+        class TTSApiClient {
+            constructor(baseUrl = 'http://localhost:8000') {
+                this.baseUrl = baseUrl;
+            }
+
+            async checkHealth() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/health`);
+                    const data = await response.json();
+                    return {
+                        success: response.ok,
+                        data: data
+                    };
+                } catch (error) {
+                    console.error('Health check failed:', error);
+                    return {
+                        success: false,
+                        error: 'サーバーに接続できません'
+                    };
+                }
+            }
+
+            async getAvailableVoices() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/voices`);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return {
+                        success: true,
+                        data: data
+                    };
+                } catch (error) {
+                    console.error('Failed to fetch voices:', error);
+                    return {
+                        success: false,
+                        error: '音声リストの取得に失敗しました',
+                        data: {
+                            voices: [
+                                { name: "Zephyr", description: "穏やかな声" },
+                                { name: "Puck", description: "活発な声" },
+                                { name: "Charon", description: "深い声" },
+                                { name: "Kore", description: "明るい声" }
+                            ],
+                            default: "Zephyr"
+                        }
+                    };
+                }
+            }
+
+            async generateSpeech(text, voice = 'Zephyr') {
+                try {
+                    if (!text || typeof text !== 'string') {
+                        throw new Error('有効なテキストを入力してください');
+                    }
+
+                    if (text.trim().length === 0) {
+                        throw new Error('テキストが空です');
+                    }
+
+                    if (text.length > 1000) {
+                        throw new Error('テキストが長すぎます（最大1000文字）');
+                    }
+
+                    const response = await fetch(`${this.baseUrl}/generate-speech`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            text: text.trim(),
+                            voice: voice
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.detail || `HTTP error! status: ${response.status}`);
+                    }
+
+                    return {
+                        success: true,
+                        data: data
+                    };
+
+                } catch (error) {
+                    console.error('Speech generation failed:', error);
+                    return {
+                        success: false,
+                        error: error.message || '音声生成に失敗しました'
+                    };
+                }
+            }
+
+            async downloadAudio(fileId) {
+                try {
+                    if (!fileId) {
+                        throw new Error('ファイルIDが指定されていません');
+                    }
+
+                    const response = await fetch(`${this.baseUrl}/download/${fileId}`);
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const audioBlob = await response.blob();
+                    
+                    return {
+                        success: true,
+                        data: {
+                            blob: audioBlob,
+                            url: URL.createObjectURL(audioBlob)
+                        }
+                    };
+
+                } catch (error) {
+                    console.error('Audio download failed:', error);
+                    return {
+                        success: false,
+                        error: error.message || '音声ダウンロードに失敗しました'
+                    };
+                }
+            }
+
+            async testConnection() {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const response = await fetch(`${this.baseUrl}/`, {
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    return response.ok;
+
+                } catch (error) {
+                    console.error('Connection test failed:', error);
+                    return false;
+                }
+            }
+        }
+
+        /**
+         * SpeakAIアプリケーションのメインクラス
+         */
+        class SpeakAIApp {
+            constructor() {
+                this.currentFileId = null;
+                this.currentAudioUrl = null;
+                this.isPlaying = false;
+                this.availableVoices = [];
+                this.selectedVoice = 'Zephyr';
+                this.api = new TTSApiClient();
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.loadVoices();
+                this.checkServerConnection();
+            }
+
+            initializeElements() {
+                this.form = document.getElementById('ttsForm');
+                this.textInput = document.getElementById('textInput');
+                this.charCount = document.getElementById('charCount');
+                this.voiceDropdown = document.getElementById('voiceDropdown');
+                this.voiceDropdownButton = document.getElementById('voiceDropdownButton');
+                this.voiceDropdownMenu = document.getElementById('voiceDropdownMenu');
+                this.selectedVoiceName = document.getElementById('selectedVoiceName');
+                this.selectedVoiceDesc = document.getElementById('selectedVoiceDesc');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+                this.audioPlayer = document.getElementById('audioPlayer');
+                this.audioElement = document.getElementById('audioElement');
+                this.playBtn = document.getElementById('playBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.errorMessage = document.getElementById('errorMessage');
+            }
+
+            bindEvents() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                this.textInput.addEventListener('input', () => this.updateCharCount());
+                this.clearBtn.addEventListener('click', () => this.clearForm());
+                this.playBtn.addEventListener('click', () => this.togglePlayback());
+                this.downloadBtn.addEventListener('click', () => this.downloadAudio());
+                this.audioElement.addEventListener('ended', () => this.onAudioEnded());
+                this.audioElement.addEventListener('loadeddata', () => this.onAudioLoaded());
+                this.audioElement.addEventListener('error', () => this.onAudioError());
+                
+                // 音声ドロップダウンのイベント
+                this.voiceDropdownButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleVoiceDropdown();
+                });
+                
+                // 外部クリックでドロップダウンを閉じる
+                document.addEventListener('click', (e) => {
+                    if (!this.voiceDropdown.contains(e.target)) {
+                        this.closeVoiceDropdown();
+                    }
+                });
+            }
+
+            toggleVoiceDropdown() {
+                const isOpen = this.voiceDropdownMenu.classList.contains('show');
+                if (isOpen) {
+                    this.closeVoiceDropdown();
+                } else {
+                    this.openVoiceDropdown();
+                }
+            }
+
+            openVoiceDropdown() {
+                this.voiceDropdownMenu.classList.add('show');
+                this.voiceDropdownButton.classList.add('active');
+            }
+
+            closeVoiceDropdown() {
+                this.voiceDropdownMenu.classList.remove('show');
+                this.voiceDropdownButton.classList.remove('active');
+            }
+
+            selectVoice(voice) {
+                this.selectedVoice = voice.name;
+                this.selectedVoiceName.textContent = voice.name;
+                this.selectedVoiceDesc.textContent = voice.description;
+                
+                // すべての選択状態をクリア
+                this.voiceDropdownMenu.querySelectorAll('.voice-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // 新しい選択状態を設定
+                const selectedOption = this.voiceDropdownMenu.querySelector(`[data-voice="${voice.name}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+                
+                this.closeVoiceDropdown();
+            }
+
+            async checkServerConnection() {
+                const isConnected = await this.api.testConnection();
+                if (!isConnected) {
+                    this.showError('サーバーに接続できません。バックエンドサーバーが起動しているか確認してください。');
+                }
+            }
+
+            async loadVoices() {
+                try {
+                    const result = await this.api.getAvailableVoices();
+                    
+                    if (result.success) {
+                        this.availableVoices = result.data.voices;
+                        this.renderVoiceDropdown(result.data.voices, result.data.default);
+                    } else {
+                        console.warn('Failed to load voices, using fallback');
+                        this.renderVoiceDropdown(result.data.voices, result.data.default);
+                    }
+                } catch (error) {
+                    console.error('Error loading voices:', error);
+                    this.showError('音声リストの読み込みに失敗しました');
+                }
+            }
+
+            renderVoiceDropdown(voices, defaultVoice = 'Zephyr') {
+                this.voiceDropdownMenu.innerHTML = '';
+                
+                voices.forEach((voice, index) => {
+                    const isDefault = voice.name === defaultVoice;
+                    const voiceOption = document.createElement('div');
+                    voiceOption.className = `voice-option ${isDefault ? 'selected' : ''}`;
+                    voiceOption.setAttribute('data-voice', voice.name);
+                    
+                    voiceOption.innerHTML = `
+                        <div class="voice-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="voice-info">
+                            <div class="voice-name">${voice.name}</div>
+                            <div class="voice-desc">${voice.description}</div>
+                        </div>
+                        <div class="voice-check">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    `;
+                    
+                    voiceOption.addEventListener('click', () => {
+                        this.selectVoice(voice);
+                    });
+                    
+                    this.voiceDropdownMenu.appendChild(voiceOption);
+                    
+                    // デフォルト音声を設定
+                    if (isDefault) {
+                        this.selectedVoice = voice.name;
+                        this.selectedVoiceName.textContent = voice.name;
+                        this.selectedVoiceDesc.textContent = voice.description;
+                    }
+                });
+            }
+
+            updateCharCount() {
+                const count = this.textInput.value.length;
+                this.charCount.textContent = count;
+                
+                if (count > 800) {
+                    this.charCount.style.color = '#ff6b6b';
+                } else if (count > 600) {
+                    this.charCount.style.color = '#ffa726';
+                } else {
+                    this.charCount.style.color = 'rgba(255, 255, 255, 0.6)';
+                }
+
+                this.generateBtn.disabled = count === 0 || count > 1000;
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const text = this.textInput.value.trim();
+                if (!text) {
+                    this.showError('テキストを入力してください。');
+                    return;
+                }
+
+                const selectedVoice = this.selectedVoice;
+
+                try {
+                    this.showLoading(true);
+                    this.hideError();
+                    this.hideAudioPlayer();
+                    
+                    const generateResult = await this.api.generateSpeech(text, selectedVoice);
+                    
+                    if (!generateResult.success) {
+                        throw new Error(generateResult.error);
+                    }
+
+                    this.currentFileId = generateResult.data.file_id;
+                    
+                    const downloadResult = await this.api.downloadAudio(this.currentFileId);
+                    
+                    if (!downloadResult.success) {
+                        throw new Error(downloadResult.error);
+                    }
+
+                    this.displayAudioPlayer(downloadResult.data.url, downloadResult.data.blob);
+                    
+                } catch (error) {
+                    console.error('Error in handleSubmit:', error);
+                    this.showError(error.message || '音声生成中にエラーが発生しました。');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            displayAudioPlayer(audioUrl, audioBlob) {
+                if (this.currentAudioUrl) {
+                    URL.revokeObjectURL(this.currentAudioUrl);
+                }
+                
+                this.currentAudioUrl = audioUrl;
+                this.currentAudioBlob = audioBlob;
+                this.audioElement.src = audioUrl;
+                this.audioPlayer.classList.add('show');
+                this.resetPlayButton();
+            }
+
+            togglePlayback() {
+                if (this.isPlaying) {
+                    this.audioElement.pause();
+                } else {
+                    this.audioElement.play().catch(error => {
+                        console.error('Playback failed:', error);
+                        this.showError('音声の再生に失敗しました。');
+                    });
+                }
+            }
+
+            onAudioEnded() {
+                this.isPlaying = false;
+                this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+
+            onAudioLoaded() {
+                this.playBtn.disabled = false;
+                this.downloadBtn.disabled = false;
+                
+                this.audioElement.addEventListener('play', () => {
+                    this.isPlaying = true;
+                    this.playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                });
+                
+                this.audioElement.addEventListener('pause', () => {
+                    this.isPlaying = false;
+                    this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                });
+            }
+
+            onAudioError() {
+                console.error('Audio playback error');
+                this.showError('音声ファイルの再生中にエラーが発生しました。');
+                this.resetPlayButton();
+            }
+
+            downloadAudio() {
+                if (this.currentAudioBlob) {
+                    const url = URL.createObjectURL(this.currentAudioBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `speakai_speech_${new Date().getTime()}.wav`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            clearForm() {
+                this.textInput.value = '';
+                this.updateCharCount();
+                this.hideAudioPlayer();
+                this.hideError();
+                this.textInput.focus();
+                
+                // デフォルト音声にリセット
+                const defaultVoice = this.availableVoices.find(v => v.name === 'Zephyr') || this.availableVoices[0];
+                if (defaultVoice) {
+                    this.selectVoice(defaultVoice);
+                }
+            }
+
+            resetPlayButton() {
+                this.isPlaying = false;
+                this.playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                this.playBtn.disabled = true;
+                this.downloadBtn.disabled = true;
+            }
+
+            showLoading(show) {
+                if (show) {
+                    this.loadingIndicator.classList.add('show');
+                    this.generateBtn.disabled = true;
+                } else {
+                    this.loadingIndicator.classList.remove('show');
+                    this.generateBtn.disabled = false;
+                }
+            }
+
+            hideAudioPlayer() {
+                this.audioPlayer.classList.remove('show');
+                
+                if (this.currentAudioUrl) {
+                    URL.revokeObjectURL(this.currentAudioUrl);
+                    this.currentAudioUrl = null;
+                }
+                
+                if (this.audioElement.src) {
+                    this.audioElement.src = '';
+                }
+                
+                this.currentAudioBlob = null;
+                this.currentFileId = null;
+                this.resetPlayButton();
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.classList.add('show');
+                
+                setTimeout(() => {
+                    this.hideError();
+                }, 5000);
+            }
+
+            hideError() {
+                this.errorMessage.classList.remove('show');
+            }
+
+            handleKeyboardShortcuts(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!this.generateBtn.disabled) {
+                        this.handleSubmit(new Event('submit'));
+                    }
+                }
+                
+                if (e.key === 'Escape') {
+                    this.clearForm();
+                }
+                
+                if (e.key === ' ' && e.target !== this.textInput && this.audioPlayer.classList.contains('show')) {
+                    e.preventDefault();
+                    this.togglePlayback();
+                }
+            }
+
+            onReady() {
+                console.log('SpeakAI initialized successfully');
+                
+                document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+                
+                this.textInput.focus();
+                this.updateCharCount();
+            }
+        }
+
+        // DOM読み込み完了後にアプリケーションを初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            window.speakAI = new SpeakAIApp();
+            window.speakAI.onReady();
+        });
+    </script>
 </body>
 </html>

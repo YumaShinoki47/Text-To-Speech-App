@@ -1,16 +1,24 @@
-# 音声読み上げアプリケーション
+# 文章読み上げアプリ SpeakAI
+
+## インストール
+```
+git clone https://github.com/YumaShinoki47/Text-To-Speech-App.git
+```
+```
+cd Text-To-Speech-App
+pip install -r requirements.txt
+```
 
 ## 起動方法
 バックエンド
-```python
+```
 cd Text-To-Speech-App/backend
 python app.py
 ```
 
 フロントエンド
-```python
+```
 cd Text-To-Speech-App/frontend
 python -m http.server 3000
 ```
 
-http://localhost:3000
