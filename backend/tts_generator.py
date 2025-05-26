@@ -124,7 +124,7 @@ class TTSGenerator:
             )
             
             # ストリーミングで音声生成を実行
-            audio_data_chunks = []
+            # audio_data_chunks = []
             
             for chunk in self.client.models.generate_content_stream(
                 model=self.model,
@@ -148,7 +148,8 @@ class TTSGenerator:
                     file_extension = mimetypes.guess_extension(inline_data.mime_type)
                     if file_extension is None:
                         # 拡張子が推測できない場合はWAVとして処理
-                        data_buffer = self.convert_to_wav(inline_data.data, inline_data.mime_type)
+                        # file_extension = ".wav"  # この行を追加
+                        data_buffer = self.convert_to_wav(inline_data.data, inline_data.mime_type)                    
                     
                     # 音声ファイルを保存
                     return self.save_binary_file(output_path, data_buffer)

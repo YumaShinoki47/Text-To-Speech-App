@@ -8,7 +8,7 @@ google-genai
 # その他必要なパッケージ
 python-multipart==0.0.6    # ファイルアップロード対応
 python-dotenv==1.0.0       # 環境変数管理
-pydantic==2.5.0            # データバリデーション
+# pydantic==2.5.0            # データバリデーション
 
 # ログ出力改善（オプション）
 colorlog==6.7.0
