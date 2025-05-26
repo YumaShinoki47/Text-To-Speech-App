@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声読み上げアプリ</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 音声読み上げ</h1>
+            <p>テキストを自然な音声に変換します</p>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <form id="ttsForm">
+            <div class="form-group">
+                <label for="textInput">読み上げるテキスト</label>
+                <div class="textarea-container">
+                    <textarea 
+                        id="textInput" 
+                        placeholder="ここに読み上げたいテキストを入力してください..."
+                        maxlength="1000"
+                    ></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span>/1000
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>音声の種類</label>
+                <div class="voice-selector" id="voiceSelector">
+                    <!-- 音声選択オプションは JavaScript で動的に生成 -->
+                </div>
+            </div>
+
+            <div class="loading" id="loadingIndicator">
+                <div class="spinner"></div>
+                <span>音声を生成中...</span>
+            </div>
+
+            <div class="controls">
+                <button type="submit" class="btn btn-primary" id="generateBtn">
+                    🎵 音声生成
+                </button>
+                <button type="button" class="btn btn-secondary" id="clearBtn">
+                    🗑️ クリア
+                </button>
+            </div>
+        </form>
+
+        <div class="audio-player" id="audioPlayer">
+            <h3>🎧 生成された音声</h3>
+            <div class="audio-controls">
+                <button class="play-btn" id="playBtn">▶️</button>
+                <button class="download-btn" id="downloadBtn">📥 ダウンロード</button>
+            </div>
+            <audio id="audioElement" preload="auto"></audio>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

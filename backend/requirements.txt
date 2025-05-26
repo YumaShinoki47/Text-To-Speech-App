@@ -1,0 +1,18 @@
+# FastAPI と関連パッケージ
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Gemini API
+google-genai
+
+# その他必要なパッケージ
+python-multipart==0.0.6    # ファイルアップロード対応
+python-dotenv==1.0.0       # 環境変数管理
+pydantic==2.5.0            # データバリデーション
+
+# ログ出力改善（オプション）
+colorlog==6.7.0
+
+# 開発用（オプション）
+pytest==7.4.3             # テスト
+requests==2.31.0          # APIテスト用
