@@ -15,6 +15,7 @@ git clone https://github.com/YumaShinoki47/Text-To-Speech-App.git
 cd Text-To-Speech-App
 pip install -r requirements.txt
 ```
+"GEMINI_API_KEY"にAPIキーを設定してください。
 
 ## 起動方法
 バックエンド
