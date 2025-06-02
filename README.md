@@ -8,8 +8,11 @@ Google Gemini 2.5 Flash Preview TTSを活用した、高品質な音声合成シ
 ## ✨特徴
 
 🤖 AI音声合成: Google Gemini 2.5 Flash Preview TTSによる自然な音声生成
+
 🌐 Webベース: ブラウザで簡単にアクセス可能
+
 📝 テキスト入力: 任意のテキストを音声に変換
+
 🎵 高品質音声: クリアで聞き取りやすい音声出力
 
 ## 🚀 クイックスタート
