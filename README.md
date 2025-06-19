@@ -1,6 +1,6 @@
 # 🎤文章読み上げアプリ SpeakAI
 
-Google Gemini 2.5 Flash Preview TTSを活用した、高品質な音声合成システムです。
+テキストを音声に変換するアプリケーションです。Gemini2.5の機能により、自然な音声でテキストを読み上げます。
 
 ![FireShot Capture 049 - SpeakAI - AIテキスト読み上げ -  localhost](https://github.com/user-attachments/assets/e67678e4-6058-45f4-b703-02d2628c6d40)
 
